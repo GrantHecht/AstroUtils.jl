@@ -1,5 +1,8 @@
 module AstroUtils
 
-# Write your package code here.
+using LinearAlgebra
+using StaticArrays
+
+include("coordConversions.jl")
 
 end

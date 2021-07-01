@@ -1,6 +1,6 @@
 using AstroUtils
-using Test
+using Test, SafeTestsets
 
-@testset "AstroUtils.jl" begin
-    # Write your tests here.
+@time begin
+@time @safetestset "cartToKep tests..." begin include("cartToKepTests.jl") end
 end
