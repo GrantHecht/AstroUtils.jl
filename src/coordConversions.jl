@@ -1,5 +1,5 @@
 
-function cartToKep(x::AbstractArray, μ::AbstractFloat)
+function cart2Kep(x::AbstractArray, μ::AbstractFloat)
 
     # Position and velocity norms
     r = sqrt(x[1]^2 + x[2]^2 + x[3]^2)
@@ -61,8 +61,11 @@ function cartToKep(x::AbstractArray, μ::AbstractFloat)
 
         # True anomoly
         eDotR = ev[1]*x[1] + ev[2]*x[2] + ev[3]*x[3]
-        ν = (rDotV > 0.0) ? acos(eDotR / (r*e)) :
-                twoπ - acos(eDotR / (r*e))
+        term  = eDotR / (r*e)
+        if abs(term) > 1.0
+            term = sign(term)
+        end
+        ν = (rDotV > 0.0) ? acos(term) : twoπ - acos(term)
 
         # Argument of periapsis/True longitude of periapsis
         if i > scTol && abs(i - π) > scTol 
@@ -73,7 +76,7 @@ function cartToKep(x::AbstractArray, μ::AbstractFloat)
             return (SVector(a, e, i, Ω, ω, ν), scFlag)
 
         else # Elliptical equatorial
-            scFlat = 1
+            scFlag = 1
             ωt = (ev[2] > 0.0) ? acos(e[1] / e) :
                     twoπ - acos(e[1] / e)
 
@@ -107,6 +110,32 @@ function cartToKep(x::AbstractArray, μ::AbstractFloat)
     end
 end
     
-
+function kep2Cart(kep, mu)
+    # Special case checks
+    if kep[2] == 0.0 && kep[3] == 0.0 # Circular equatorial
+        kepc    = SVector(kep[1], kep[2], kep[3], 0.0, 0.0, kep[6])
+    elseif kep[2] == 0.0 # Circular inclined
+        kepc    = SVector(kep[1], kep[2], kep[3], kep[4], 0.0, kep[6])
+    elseif kep[3] == 0.0 # Elliptical equatorial
+        kepc    = SVector(kep[1], kep[2], kep[3], 0.0, kep[5], kep[6])
+    else # Genaric
+         kepc    = SVector(kep[1], kep[2], kep[3], kep[4], kep[5], kep[6])
+    end
+    
+    # Compute semi-parameter
+    p       = kepc[1]*(1.0 - kepc[2]^2);
+    
+    # Compute position and velocity in PQW frame
+    term1   = 1.0 / (1.0 + kepc[2]*cos(kepc[6]));
+    term2   = sqrt(mu / p);
+    rpqw    = @SVector [p*cos(kepc[6])*term1, p*sin(kepc[6])*term1, 0];
+    vpqw    = @SVector [-term2*sin(kepc[6]), term2*(kepc[2] + cos(kepc[6])), 0];
+    
+    # Rotate to inertial reference frame
+    r       = rot3Vec(rot1Vec(rot3Vec(rpqw, -kepc[5]), -kepc[3]), -kepc[4]);
+    v       = rot3Vec(rot1Vec(rot3Vec(vpqw, -kepc[5]), -kepc[3]), -kepc[4]);
+        
+    cart = SVector(r[1], r[2], r[3], v[1], v[2], v[3]);
+end
 
     
