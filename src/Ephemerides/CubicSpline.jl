@@ -15,54 +15,50 @@ struct CubicSpline
         coeffs  = zeros(4*n, 6)
 
         # Allocate A and b matricies
-        #A       = zeros(4*n, 4*n)
         A       = spzeros(4*n, 4*n)
         b       = zeros(4*n, 1)
-
-        # Create linear problem
-        prob    = LinearProblem(A, b)
 
         # Loop through position states and compute splines
         for i in 1:6
             # Fill A and B with 0th order constraints
-            prob.A .= 0.0
-            prob.b .= 0.0
+            A .= 0.0
+            b .= 0.0
             for j in 1:n
                 x1 = ts[j]
                 x2 = ts[j + 1]
                 y1 = states[j, i]
                 y2 = states[j + 1, i]
 
-                prob.A[1 + 2*(j - 1), 1 + 4*(j - 1)] = x1*x1*x2
-                prob.A[1 + 2*(j - 1), 2 + 4*(j - 1)] = x1*x1
-                prob.A[1 + 2*(j - 1), 3 + 4*(j - 1)] = x1
-                prob.A[1 + 2*(j - 1), 4 + 4*(j - 1)] = 1.0
-                prob.A[2 + 2*(j - 1), 1 + 4*(j - 1)] = x2*x2*x2
-                prob.A[2 + 2*(j - 1), 2 + 4*(j - 1)] = x2*x2
-                prob.A[2 + 2*(j - 1), 3 + 4*(j - 1)] = x2
-                prob.A[2 + 2*(j - 1), 4 + 4*(j - 1)] = 1.0
-                prob.b[1 + 2*(j - 1)]                = y1
-                prob.b[2 + 2*(j - 1)]                = y2
+                A[1 + 2*(j - 1), 1 + 4*(j - 1)] = x1*x1*x2
+                A[1 + 2*(j - 1), 2 + 4*(j - 1)] = x1*x1
+                A[1 + 2*(j - 1), 3 + 4*(j - 1)] = x1
+                A[1 + 2*(j - 1), 4 + 4*(j - 1)] = 1.0
+                A[2 + 2*(j - 1), 1 + 4*(j - 1)] = x2*x2*x2
+                A[2 + 2*(j - 1), 2 + 4*(j - 1)] = x2*x2
+                A[2 + 2*(j - 1), 3 + 4*(j - 1)] = x2
+                A[2 + 2*(j - 1), 4 + 4*(j - 1)] = 1.0
+                b[1 + 2*(j - 1)]                = y1
+                b[2 + 2*(j - 1)]                = y2
             end
 
             # Fill A and B with 1st order constraints
             for j in 1:n-1
                 x  = ts[j + 1]
-                prob.A[2*n + j, 1 + 4*(j - 1)]           = 3.0*x*x
-                prob.A[2*n + j, 2 + 4*(j - 1)]           = 2.0*x
-                prob.A[2*n + j, 3 + 4*(j - 1)]           = 1.0
-                prob.A[2*n + j, 5 + 4*(j - 1)]           = -3.0*x*x
-                prob.A[2*n + j, 6 + 4*(j - 1)]           = -2.0*x
-                prob.A[2*n + j, 7 + 4*(j - 1)]           = -1.0
+                A[2*n + j, 1 + 4*(j - 1)]           = 3.0*x*x
+                A[2*n + j, 2 + 4*(j - 1)]           = 2.0*x
+                A[2*n + j, 3 + 4*(j - 1)]           = 1.0
+                A[2*n + j, 5 + 4*(j - 1)]           = -3.0*x*x
+                A[2*n + j, 6 + 4*(j - 1)]           = -2.0*x
+                A[2*n + j, 7 + 4*(j - 1)]           = -1.0
             end
 
             # Fill A and B with 2nd order constriants
             for j in 1:n-1
                 x  = ts[j + 1]
-                prob.A[2*n + n - 1 + j, 1 + 4*(j - 1)]           = 6.0*x
-                prob.A[2*n + n - 1 + j, 2 + 4*(j - 1)]           = 2.0
-                prob.A[2*n + n - 1 + j, 5 + 4*(j - 1)]           = -6.0*x
-                prob.A[2*n + n - 1 + j, 6 + 4*(j - 1)]           = -2.0
+                A[2*n + n - 1 + j, 1 + 4*(j - 1)]           = 6.0*x
+                A[2*n + n - 1 + j, 2 + 4*(j - 1)]           = 2.0
+                A[2*n + n - 1 + j, 5 + 4*(j - 1)]           = -6.0*x
+                A[2*n + n - 1 + j, 6 + 4*(j - 1)]           = -2.0
             end
 
             # If on position state...
@@ -73,31 +69,27 @@ struct CubicSpline
                 v1  = states[1, 3 + i]
                 v2  = states[end, 3 + i]
 
-                prob.A[end - 1, 1]      = 3.0*x1*x1
-                prob.A[end - 1, 2]      = 2.0*x1
-                prob.A[end - 1, 3]      = 1.0
-                prob.A[end, end - 3]    = 3.0*x1*x1
-                prob.A[end, end - 2]    = 2.0*x1
-                prob.A[end, end - 1]    = 1.0
-                prob.b[end - 1]         = v1
-                prob.b[end]             = v2
+                A[end - 1, 1]      = 3.0*x1*x1
+                A[end - 1, 2]      = 2.0*x1
+                A[end - 1, 3]      = 1.0
+                A[end, end - 3]    = 3.0*x1*x1
+                A[end, end - 2]    = 2.0*x1
+                A[end, end - 1]    = 1.0
+                b[end - 1]         = v1
+                b[end]             = v2
             else
                 # Add final constraint to force first and last 2nd deriv to equal zero
                 x1  = ts[1]
                 x2  = ts[end]
 
-                prob.A[end - 1, 1]      = 6.0*x1
-                prob.A[end - 1, 2]      = 2.0
-                prob.A[end, end - 3]    = 6.0*x1
-                prob.A[end, end - 2]    = 2.0
+                A[end - 1, 1]      = 6.0*x1
+                A[end - 1, 2]      = 2.0
+                A[end, end - 3]    = 6.0*x1
+                A[end, end - 2]    = 2.0
             end
 
-            # Solve the linear system
-            #sol = solve(prob)
-
             # Set coefficients
-            #coeffs[:,i] .= sol.u
-            coeffs[:,i] .= prob.A \ prob.b
+            coeffs[:,i] .= A \ b
         end
 
         return new(ts, coeffs)
