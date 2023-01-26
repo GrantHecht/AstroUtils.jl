@@ -79,8 +79,10 @@ function cart2Kep(x::AbstractArray, μ::AbstractFloat)
         # Argument of periapsis/True longitude of periapsis
         if i > scTol && abs(i - π) > scTol 
             nDotE = nv[1]*ev[1] + nv[2]*ev[2] + nv[3]*ev[3]
-            ω = (ev[3] > 0.0) ? acos(nDotE / (n*e)) : 
-                    twoπ - acos(nDotE / (n*e))
+            tt    = nDotE / (n*e)
+            tt    = (tt >  1.0 ? 1.0 : tt)
+            tt    = (tt < -1.0 ? -1.0 : tt)
+            ω = (ev[3] > 0.0) ? acos(tt) : (twoπ - acos(tt))
 
             return (SVector(a, e, i, Ω, ω, ν), scFlag)
 
