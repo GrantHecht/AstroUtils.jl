@@ -72,8 +72,8 @@ struct CubicSpline
                 A[end - 1, 1]      = 3.0*x1*x1
                 A[end - 1, 2]      = 2.0*x1
                 A[end - 1, 3]      = 1.0
-                A[end, end - 3]    = 3.0*x1*x1
-                A[end, end - 2]    = 2.0*x1
+                A[end, end - 3]    = 3.0*x2*x2
+                A[end, end - 2]    = 2.0*x2
                 A[end, end - 1]    = 1.0
                 b[end - 1]         = v1
                 b[end]             = v2
@@ -84,7 +84,7 @@ struct CubicSpline
 
                 A[end - 1, 1]      = 6.0*x1
                 A[end - 1, 2]      = 2.0
-                A[end, end - 3]    = 6.0*x1
+                A[end, end - 3]    = 6.0*x2
                 A[end, end - 2]    = 2.0
             end
 
