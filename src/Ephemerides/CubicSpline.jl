@@ -1,7 +1,7 @@
 
-struct CubicSpline
+struct CubicSpline{LinRangeType <: LinRange}
     # Cubic spline time stamps
-    ts::LinRange{Float64, Int}
+    ts::LinRangeType
 
     # Spline coefficients
     coeffs::Matrix{Float64}
@@ -92,7 +92,7 @@ struct CubicSpline
             coeffs[:,i] .= A \ b
         end
 
-        return new(ts, coeffs)
+        return new{typeof(ts)}(ts, coeffs)
     end
 end
 
