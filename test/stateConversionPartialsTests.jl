@@ -1,8 +1,8 @@
 using AstroUtils, StaticArrays, ForwardDiff
 
 # Position and velocity
-rv = SVector(6524.834 + 100.0*randn(), 6862.875 + 100.0*randn(),  6448.296 + 100.0*randn(), # [km] 
-             4.901327 + 1.0*randn(), 5.533756 + 1.0*randn(), -1.976341 + 1.0*randn()) # [km/s]
+rv = SVector(6524.834, 6862.875,  6448.296, # [km] 
+             4.901327, 5.533756, -1.976341) # [km/s]
 μ  = 3.986e5
 
 # Convert to MEE 
