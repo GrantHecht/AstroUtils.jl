@@ -244,12 +244,3 @@ function mee2Cart(mee, mu)
                    -s2Inv*sqrtmup*(-cos(mee[6]) + α2*cos(mee[6]) + 2*mee[4]*mee[5]*sin(mee[6]) - mee[2] + 2.0*mee[3]*mee[4]*mee[5] + α2*mee[2]),
                    2.0*s2Inv*sqrtmup*(mee[4]*cos(mee[6]) + mee[5]*sin(mee[6]) + mee[2]*mee[4] + mee[3]*mee[5]))
 end
-
-# Convert MEE to kep 
-function convertState(state::AbstractArray, ::Type{MEE}, ::Type{Keplerian}, mu)
-    # Convert MEE to cartesian
-    cart = convertState(state, MEE, Cartesian, mu)
-
-    # Convert to Keplerian and return
-    return convertState(cart, Cartesian, Keplerian, mu)
-end
