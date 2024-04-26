@@ -164,6 +164,23 @@ function kep2Mee(kep)
     return SVector(p,f,g,h,k,L)
 end
 
+convertState(state::AbstractArray, ::Type{MEE}, ::Type{Keplerian}, mu) = mee2Kep(state)
+function mee2Kep(mee)
+    a = mee[1] / (1.0 - mee[2]*mee[2] - mee[3]*mee[3])
+    e = sqrt(mee[2]*mee[2] + mee[3]*mee[3])
+    i = atan(
+        2.0*sqrt(mee[4]*mee[4] + mee[5]*mee[5]),
+        1.0 - mee[4]*mee[4] - mee[5]*mee[5],
+    )
+    Ω = atan(mee[5], mee[4])
+    ω = atan(
+        mee[3]*mee[4] - mee[2]*mee[5],
+        mee[2]*mee[4] + mee[3]*mee[5],
+    )
+    ν = mee[6] - atan(mee[3] / mee[2])
+    return SVector(a,e,i,Ω,ω,ν)
+end
+
 convertState(state::AbstractArray, ::Type{Cartesian}, ::Type{MEE}, mu) = cart2Mee(state, mu)
 function cart2Mee(cart, mu)
     # Compute requirements
