@@ -179,7 +179,7 @@ function mee2Kep(mee)
         mee[3]*mee[4] - mee[2]*mee[5],
         mee[2]*mee[4] + mee[3]*mee[5],
     )
-    ν = mee[6] - atan(mee[3] / mee[2])
+    ν = mee[6] - atan(mee[3],mee[2])
     return SVector(a,e,i,Ω,ω,ν)
 end
 
