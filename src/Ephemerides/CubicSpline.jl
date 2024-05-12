@@ -129,15 +129,19 @@ function getPosition(spline::CubicSpline, t)
         throw(ArgumentError("Time passed to getState() is outside of CubicSpline bounds."))
     end
 
-    # Find relevent polynomial index 
-    idxFound = false
-    idx      = 0
-    while !idxFound
-        idx += 1
-        if t >= spline.ts[idx] && t <= spline.ts[idx + 1]
-            idxFound = true
-        end
-    end
+    # Compute time step
+    Δt = (spline.ts.stop - spline.ts.start)/spline.ts.lendiv
+    idx = floor(Int64, t / Δt) + 1
+
+    # # Find relevent polynomial index 
+    # idxFound = false
+    # idx_old  = 0
+    # while !idxFound
+    #     idx_old += 1
+    #     if t >= spline.ts[idx_old] && t <= spline.ts[idx_old + 1]
+    #         idxFound = true
+    #     end
+    # end
 
     # Compute interpolants
     rx  = spline.coeffs[1 + 4*(idx - 1),1]*t^3 + spline.coeffs[2 + 4*(idx - 1),1]*t^2 + spline.coeffs[3 + 4*(idx - 1),1]*t + spline.coeffs[4 + 4*(idx - 1),1]
