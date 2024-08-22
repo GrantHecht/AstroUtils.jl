@@ -185,62 +185,79 @@ end
 
 convertState(state::AbstractArray, ::Type{Cartesian}, ::Type{MEE}, mu) = cart2Mee(state, mu)
 function cart2Mee(cart, mu)
-    # Compute requirements
-    r       = sqrt(cart[1]*cart[1] + cart[2]*cart[2] + cart[3]*cart[3])
-    v       = sqrt(cart[4]*cart[4] + cart[5]*cart[5] + cart[6]*cart[6])
-    rhat    = SVector(cart[1] / r, cart[2] / r, cart[3] / r) 
-    vhat    = SVector(cart[4] / v, cart[5] / v, cart[6] / v)
-    rDotv   = cart[1]*cart[4] + cart[2]*cart[5] + cart[3]*cart[6]
+    r = SA[cart[1], cart[2], cart[3]]
+    v = SA[cart[4], cart[5], cart[6]]
 
-    hvec    = SVector(cart[2]*cart[6] - cart[3]*cart[5],
-                      cart[3]*cart[4] - cart[1]*cart[6],
-                      cart[1]*cart[5] - cart[2]*cart[4])
-    hmag    = sqrt(hvec[1]*hvec[1] + hvec[2]*hvec[2] + hvec[3]*hvec[3])
-    hhat    = SVector(hvec[1] / hmag, hvec[2] / hmag, hvec[3] / hmag)
-    muInv   = 1.0 / mu
+    rdv = dot(r, v)
+    rmag = norm(r)
+    rhat = r / rmag
+    hvec = cross(r, v)
+    hmag = norm(hvec)
+    hhat = hvec / hmag
+    vhat = (rmag*v - rdv*rhat) / hmag
 
-    # Compute elements
-    p       = hmag*hmag * muInv
-    k       = hhat[1] / (1.0 + hhat[3])
-    h       = -hhat[2] / (1.0 + hhat[3])
+    p   = hmag^2 / mu
+    k   =  hhat[1]/(1.0 + hhat[3])
+    h   = -hhat[2]/(1.0 + hhat[3])
+    kk  = k*k
+    hh  = h*h
+    s2  = 1.0 + hh + kk
+    tkh = 2.0*k*h
+    ecc = cross(v,hvec) / mu - rhat
 
-    kk      = k*k
-    hh      = h*h
-    s2      = 1.0 + hh + kk
-    tkh     = 2.0*k*h
+    fhat = SA[
+        1.0 - kk + hh,
+        tkh,
+        -2.0*k,
+    ]
+    ghat = SA[
+        tkh,
+        1.0 + kk - hh,
+        2.0*h,
+    ]
+    fhat = fhat / s2
+    ghat = ghat / s2
+    f    = dot(ecc, fhat)
+    g    = dot(ecc, ghat)
+    L    = atan(rhat[2]-vhat[1],rhat[1]+vhat[2])
 
-    ecc     = SVector((cart[5]*hvec[3] - cart[6]*hvec[2]) * muInv - rhat[1],
-                      (cart[6]*hvec[1] - cart[4]*hvec[3]) * muInv - rhat[2],
-                      (cart[4]*hvec[2] - cart[5]*hvec[1]) * muInv - rhat[3])
-
-    s2Inv   = 1.0 / s2
-    fhat1   = (1.0 - kk + hh) * s2Inv
-    fhat2   = tkh * s2Inv
-    fhat3   = (-2.0 * k) * s2Inv
-    ghat1   = tkh * s2Inv
-    ghat2   = (1.0 + kk - hh) * s2Inv
-    ghat3   = (2.0 * h) * s2Inv
-
-    f       = ecc[1]*fhat1 + ecc[2]*fhat2 + ecc[3]*fhat3
-    g       = ecc[1]*ghat1 + ecc[2]*ghat2 + ecc[3]*ghat3
-    L       = atan(rhat[2] - vhat[1], rhat[1] + vhat[2]) 
-
-    return SVector(p,f,g,h,k,L)
+    return SA[p,f,g,h,k,L]
 end
 
 convertState(state::AbstractArray, ::Type{MEE}, ::Type{Cartesian}, mu) = mee2Cart(state, mu)
 function mee2Cart(mee, mu)
-    α2      = mee[4]*mee[4] - mee[5]*mee[5]
-    s2      = 1.0 + mee[4]*mee[4] + mee[5]*mee[5]
-    s2Inv   = 1.0 / s2
-    w       = 1.0 + mee[2]*cos(mee[6]) + mee[3]*sin(mee[6])
-    r       = mee[1] / w
-    sqrtmup = sqrt(mu / mee[1])
+    p = mee[1]
+    f = mee[2]
+    g = mee[3]
+    h = mee[4]
+    k = mee[5]
+    L = mee[6]
 
-    return SVector(r*s2Inv*(cos(mee[6]) + α2*cos(mee[6]) + 2*mee[4]*mee[5]*sin(mee[6])),
-                   r*s2Inv*(sin(mee[6]) - α2*sin(mee[6]) + 2*mee[4]*mee[5]*cos(mee[6])),
-                   2.0*r*s2Inv*(mee[4]*sin(mee[6]) - mee[5]*cos(mee[6])),
-                   -s2Inv*sqrtmup*( sin(mee[6]) + α2*sin(mee[6]) - 2*mee[4]*mee[5]*cos(mee[6]) + mee[3] - 2.0*mee[2]*mee[4]*mee[5] + α2*mee[3]),
-                   -s2Inv*sqrtmup*(-cos(mee[6]) + α2*cos(mee[6]) + 2*mee[4]*mee[5]*sin(mee[6]) - mee[2] + 2.0*mee[3]*mee[4]*mee[5] + α2*mee[2]),
-                   2.0*s2Inv*sqrtmup*(mee[4]*cos(mee[6]) + mee[5]*sin(mee[6]) + mee[2]*mee[4] + mee[3]*mee[5]))
+    kk = k*k
+    hh = h*h
+    tkh = 2.0*k*h
+    s2 = 1.0 + hh + kk
+    cL = cos(L)
+    sL = sin(L)
+    w = 1.0 + f*cL + g*sL
+    r = p / w
+    smp = sqrt(mu/p)
+    fhat = SA[
+        1.0 - kk + hh,
+        tkh,
+        -2.0*k,
+    ]
+    ghat = SA[
+        tkh,
+        1.0 + kk - hh,
+        2.0*h,
+    ]
+    fhat = fhat / s2
+    ghat = ghat / s2
+    x = r*cL
+    y = r*sL
+    xdot = -smp*(g + sL)
+    ydot = smp*(f + cL)
+
+    return [x*fhat + y*ghat; xdot*fhat + ydot*ghat]
 end
