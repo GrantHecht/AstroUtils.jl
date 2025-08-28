@@ -22,9 +22,11 @@ const defaultPCK    = pkgSrcDir * "/../data/kernels/pck/gravity.tpc"
 
 # Includes
 include("spice.jl")
+include("TwoBodyUtils/kepler.jl")
 include("StateRepresentations/stateRepresentations.jl")
 include("Ephemerides/Ephemerides.jl")
 
 export furnshDefaults
+export kepler
 
 end
